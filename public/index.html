@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script type="module">
+      import {
+        Application,
+        Controller,
+      } from "https://unpkg.com/@hotwired/stimulus/dist/stimulus.js";
+      window.Stimulus = Application.start();
+
+      Stimulus.register(
+        "hello",
+        class extends Controller {
+          static targets = ["name", "output"];
+
+          greet() {
+            this.outputTarget.innerText = this.nameTarget.value;
+          }
+        }
+      );
+      Stimulus.register(
+        "slideshow",
+        class extends Controller {
+          static targets = ["slide"];
+          static values = { index: Number };
+          connect() {
+            console.log("this is connect");
+          }
+
+          indexValueChanged() {
+            this.showCurrentSlide();
+          }
+          next() {
+            this.indexValue++;
+            console.log(this.index);
+          }
+
+          previous() {
+            this.indexValue--;
+          }
+
+          showCurrentSlide() {
+            this.slideTargets.forEach((element, index) => {
+              element.hidden = index !== this.indexValue;
+            });
+          }
+        }
+      );
+      Stimulus.register(
+        "content-loader",
+        class extends Controller {
+          static targets = [];
+          static values = { url: String, refreshInterval: Number };
+          startRefreshing() {
+            this.refreshTimer = setInterval(() => {
+              this.load();
+            }, this.refreshIntervalValue);
+          }
+          stopRefreshing() {
+            if (this.refreshTimer) {
+              clearInterval(this.refreshTimer);
+            }
+          }
+          connect(params) {
+            console.log(params);
+          }
+          disconnect() {
+            this.stopRefreshing();
+          }
+
+          load({ params }) {
+            console.log({ params });
+            fetch(params.url)
+              .then((response) => response.text())
+              .then((html) => (this.element.innerHTML = html));
+          }
+        }
+      );
+    </script>
+    <style></style>
+  </head>
+  <body>
+    <div
+      data-controller="content-loader"
+      data-content-loader-url-value="./message.html"
+      data-content-loader-refresh-interval-value="5000"
+    >
+      <a
+        href="#"
+        data-content-loader-url-param="./message.html"
+        data-action="content-loader#load"
+        >Messages</a
+      >
+      <a
+        href="#"
+        data-content-loader-url-param="./comment.html"
+        data-action="content-loader#load"
+        >Comments</a
+      >
+      <button data-action="content-loader#startRefreshing">Refresh</button>
+    </div>
+  </body>
+</html>
